@@ -1,0 +1,14 @@
+.venv/
+venv/
+.env/
+env/
+ENV/
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+.vscode/
+
+*.log
+*.txt
