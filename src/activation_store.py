@@ -1,54 +1,55 @@
+import os
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from config import HOOK_LAYER_INDEX, MAX_SEQ_LEN, MODEL_NAME, get_hf_token
+from config import HOOK_LAYER_INDEX, MAX_SEQ_LEN, MODEL_NAME
+from dist_utils import log0
+
+
+class StopForward(Exception):
+    pass
 
 
 class FrozenActivationModel:
-    """
-    Loads the frozen base model and captures one hidden activation tensor
-    from a chosen layer using a forward hook.
-    """
-
     def __init__(self, device: torch.device, model_dtype: torch.dtype):
         self.device = device
-        self.model_dtype = model_dtype
-        self.hf_token = get_hf_token()
+        self.token = os.environ.get("HF_TOKEN")
 
+        log0("Loading tokeniser ...")
         self.tokenizer = AutoTokenizer.from_pretrained(
             MODEL_NAME,
-            token=self.hf_token,
+            token=self.token,
         )
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
+        log0(f"Loading {MODEL_NAME} (frozen) ...")
         self.model = AutoModelForCausalLM.from_pretrained(
             MODEL_NAME,
-            token=self.hf_token,
+            token=self.token,
             dtype=model_dtype,
             low_cpu_mem_usage=True,
         )
         self.model.to(device)
         self.model.eval()
+        self.model.requires_grad_(False)
 
-        for p in self.model.parameters():
-            p.requires_grad_(False)
-
-        self.activation_store: dict[str, torch.Tensor] = {}
+        self.activation_store = {}
 
         def hook_fn(module, inputs, output):
             if isinstance(output, (tuple, list)):
                 output = output[0]
-
             if not isinstance(output, torch.Tensor):
                 raise TypeError(f"Hook output is not a tensor: {type(output)}")
-
             self.activation_store["act"] = output.detach()
+            raise StopForward()
 
-        target_module = self.model.model.layers[HOOK_LAYER_INDEX]
-        self.handle = target_module.register_forward_hook(hook_fn)
+        self.handle = self.model.model.layers[HOOK_LAYER_INDEX].register_forward_hook(hook_fn)
+        log0(f"Residual-stream hook registered at layer {HOOK_LAYER_INDEX}")
 
-    def capture_text_batch(self, texts: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
+    @torch.no_grad()
+    def capture_text_batch(self, texts: list[str]):
         batch = self.tokenizer(
             texts,
             return_tensors="pt",
@@ -60,19 +61,22 @@ class FrozenActivationModel:
 
         self.activation_store.clear()
 
-        with torch.no_grad():
-            _ = self.model(
+        try:
+            self.model(
                 input_ids=batch["input_ids"],
                 attention_mask=batch["attention_mask"],
                 use_cache=False,
             )
+        except StopForward:
+            pass
 
         if "act" not in self.activation_store:
-            raise RuntimeError("Hook fired zero times; no activation was captured.")
+            raise RuntimeError("Hook did not capture activation.")
 
-        act = self.activation_store["act"]
-        attention_mask = batch["attention_mask"]
-        return act, attention_mask
+        act = self.activation_store["act"].to(torch.float32)
+        mask = batch["attention_mask"].bool()
+        mask[:, 0] = False
+        return act, mask
 
-    def close(self) -> None:
+    def close(self):
         self.handle.remove()

@@ -4,12 +4,14 @@ import gzip
 import json
 import math
 import os
+import socket
 import urllib.request
 from pathlib import Path
 from typing import Iterator
 
 import torch
 import torch.distributed as dist
+import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -57,14 +59,6 @@ DATA_CACHE_PATH = DATA_CACHE_DIR / "v1_5r2_sample-0000.json.gz"
 
 
 # ============================================================
-# Early Exit Mechanism
-# ============================================================
-
-class EarlyExitException(Exception):
-    pass
-
-
-# ============================================================
 # Distributed helpers
 # ============================================================
 
@@ -100,6 +94,12 @@ def all_reduce_sum(x: torch.Tensor) -> torch.Tensor:
     if is_distributed():
         dist.all_reduce(y, op=dist.ReduceOp.SUM)
     return y
+
+
+def find_free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return int(s.getsockname()[1])
 
 
 def setup_process(rank: int, local_rank: int, world_size: int, init_method: str | None) -> torch.device:
@@ -176,6 +176,7 @@ def download_url_to_file(url: str, dst: Path) -> None:
 
 
 def ensure_local_dolma_shard(path: Path) -> Path:
+    # Only rank 0 downloads; everyone else waits.
     if get_rank() == 0 and not path.exists():
         print0(f"[rank=0] Downloading Dolma shard to {path}")
         download_url_to_file(DOLMA_SAMPLE_URL, path)
@@ -194,6 +195,19 @@ def iter_rank_text_batches(
     rank: int,
     world_size: int,
 ) -> Iterator[list[str]]:
+    """
+    Deterministic equal split across ranks.
+
+    Rules:
+    - Build complete groups of exactly `world_size` usable texts.
+    - Within each complete group, rank k gets item k.
+    - If the final group is incomplete, drop it.
+    - Then build per-rank batches of size `local_batch_size`.
+    - If the final batch is incomplete, drop it.
+
+    Result:
+    Every rank yields exactly the same number of steps.
+    """
     assigned_texts: list[str] = []
     current_group: list[str] = []
 
@@ -216,6 +230,8 @@ def iter_rank_text_batches(
                 if len(assigned_texts) == local_batch_size:
                     yield assigned_texts
                     assigned_texts = []
+
+    # Drop incomplete current_group and incomplete assigned_texts on purpose.
 
 
 # ============================================================
@@ -466,6 +482,9 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
 
     barrier()
 
+    # ----------------------------
+    # Load tokenizer
+    # ----------------------------
     tokenizer = AutoTokenizer.from_pretrained(
         MODEL_NAME,
         token=hf_token,
@@ -473,6 +492,10 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    # ----------------------------
+    # Load frozen base model
+    # One full frozen model replica per rank/GPU.
+    # ----------------------------
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
         token=hf_token,
@@ -484,6 +507,9 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
     for p in model.parameters():
         p.requires_grad_(False)
 
+    # ----------------------------
+    # Hook activation
+    # ----------------------------
     activation_store: dict[str, torch.Tensor] = {}
 
     def hook_fn(module, inputs, output):
@@ -494,8 +520,6 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
             raise TypeError(f"Hook output is not a tensor: {type(output)}")
 
         activation_store["act"] = output.detach()
-        # 抛出异常，强行打断前向传播
-        raise EarlyExitException()
 
     target_module = model.model.layers[HOOK_LAYER_INDEX]
     handle = target_module.register_forward_hook(hook_fn)
@@ -533,16 +557,12 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
 
                 activation_store.clear()
 
-                try:
-                    with torch.no_grad():
-                        _ = model(
-                            input_ids=batch["input_ids"],
-                            attention_mask=batch["attention_mask"],
-                            use_cache=False,
-                        )
-                except EarlyExitException:
-                    # 捕获异常，前向传播已在目标层被成功截断
-                    pass
+                with torch.no_grad():
+                    _ = model(
+                        input_ids=batch["input_ids"],
+                        attention_mask=batch["attention_mask"],
+                        use_cache=False,
+                    )
 
                 if "act" not in activation_store:
                     raise RuntimeError("Hook fired zero times; no activation was captured.")
@@ -590,6 +610,9 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
 
                 x_hat, z, pre_acts, x_scaled = sae_model(x)
 
+                # --------------------------------------------------
+                # Exact global-token normalisation for DDP
+                # --------------------------------------------------
                 recon_per_token = ((x_hat - x_scaled) ** 2).mean(dim=-1)         # [B*S]
                 recon_sum_local = (recon_per_token * mask_flat).sum()
 
@@ -600,6 +623,8 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
                 valid_tokens_local = mask_flat.sum().clamp(min=1.0)
                 valid_tokens_global = all_reduce_sum(valid_tokens_local.detach())
 
+                # Because DDP averages gradients across ranks, multiply by world_size
+                # so the resulting gradient matches the true global-token objective.
                 scale = float(world_size) / valid_tokens_global
 
                 recon_loss = recon_sum_local * scale
@@ -617,6 +642,9 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
                 optimizer.step()
                 sae_base._normalise_decoder_()
 
+                # --------------------------------------------------
+                # Logging values computed from global sums
+                # --------------------------------------------------
                 recon_sum_global = all_reduce_sum(recon_sum_local.detach())
                 l0_sum_global = all_reduce_sum(l0_sum_local.detach())
 
@@ -684,17 +712,19 @@ def run_training(rank: int, local_rank: int, world_size: int, init_method: str |
 # ============================================================
 
 def main() -> None:
-    if "RANK" not in os.environ or "WORLD_SIZE" not in os.environ:
-        raise RuntimeError(
-            "Launch Violation: This script must be launched using torchrun. "
-            "Example: torchrun --nproc_per_node=8 script.py"
-        )
+    if not torch.cuda.is_available():
+        if REQUIRE_CUDA:
+            raise RuntimeError(
+                "CUDA is not available. Run this on a GPU compute node, not the login node."
+            )
+        run_training(rank=0, local_rank=0, world_size=1, init_method=None)
+        return
 
     rank = int(os.environ["RANK"])
-    local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+    local_rank = int(os.environ["LOCAL_RANK"])
     world_size = int(os.environ["WORLD_SIZE"])
-    
     run_training(rank=rank, local_rank=local_rank, world_size=world_size, init_method="env://")
+    return
 
 
 if __name__ == "__main__":
