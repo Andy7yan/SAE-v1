@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from config import INIT_THRESHOLD, LATENT_FACTOR, STE_BANDWIDTH
+from config import INIT_THRESHOLD, LATENT_DIM, LATENT_FACTOR, STE_BANDWIDTH
 
 
 def rectangle_window(x: torch.Tensor):
@@ -58,7 +58,12 @@ def jumprelu_ste(x: torch.Tensor, threshold: torch.Tensor, bandwidth: float):
 class TinyJumpReLUSAE(nn.Module):
     def __init__(self, d_in: int):
         super().__init__()
-        d_latent = d_in * LATENT_FACTOR
+        if LATENT_DIM is not None:
+            d_latent = int(LATENT_DIM)
+        elif LATENT_FACTOR is not None:
+            d_latent = int(d_in * LATENT_FACTOR)
+        else:
+            raise ValueError("Set either LATENT_DIM or LATENT_FACTOR in config.py")
 
         self.d_in = d_in
         self.d_latent = d_latent

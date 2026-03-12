@@ -14,4 +14,7 @@ __pycache__/
 *.txt
 
 *.pt
+*.json
+*.gz
+*.OU
 train-log

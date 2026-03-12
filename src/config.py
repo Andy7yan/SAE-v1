@@ -1,30 +1,46 @@
 from pathlib import Path
+import os
 
 MODEL_NAME = "google/gemma-2-2b-it"
 DOLMA_URL = "https://olmo-data.org/dolma-v1_6/books/books-0000.json.gz"
-DATA_CACHE_PATH = Path("./data_cache/books-0000.json.gz")
+
+SCRATCH_BASE = Path(f"/srv/scratch/{os.environ['USER']}/sae-v2")
+DATA_CACHE_PATH = SCRATCH_BASE / "data_cache" / "books-0000.json.gz"
 
 HOOK_LAYER_INDEX = 12
-MAX_SEQ_LEN = 64
+MAX_SEQ_LEN = 128
 MIN_TEXT_CHARS = 20
 
 TEXT_BATCH_SIZE_PER_RANK = 8
 SAE_BATCH_SIZE = 4096
-BUFFER_CAPACITY = 32768
+BUFFER_CAPACITY = 65536
 
-TRAIN_STEPS = 200
-LOG_EVERY = 10
-SAVE_EVERY = 100
+TRAIN_STEPS = 8000
+LOG_EVERY = 20
+SAVE_EVERY = 1000
 
-LATENT_FACTOR = 4
+LATENT_DIM = 16384
+LATENT_FACTOR = None
+
 INIT_THRESHOLD = 1e-3
 STE_BANDWIDTH = 1e-3
 L0_COEFF = 1e-3
-LR = 1e-3
-MEAN_INIT_BATCHES = 16
+
+LR = 7e-5
+ADAM_BETA1 = 0.0
+ADAM_BETA2 = 0.999
+ADAM_EPS = 1e-8
+
+LR_WARMUP_STEPS = 1000
+LR_WARMUP_START_FACTOR = 0.1
+L0_WARMUP_STEPS = 10000
+
+MEAN_INIT_BATCHES = 64
+TOKEN_STATS_BATCHES = 32
+TOKEN_LENGTH_PROBE_MAX_LEN = 4096
 
 SEED = 42
 HTTP_TIMEOUT = 30
 USER_AGENT = "Mozilla/5.0"
 
-OUTPUT_DIR = Path("./outputs/jumprelu_sae_raw_dolma")
+OUTPUT_DIR = SCRATCH_BASE / "outputs" / "jumprelu_sae_raw_dolma"

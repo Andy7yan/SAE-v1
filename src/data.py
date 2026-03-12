@@ -14,14 +14,16 @@ def extract_text(row: dict) -> str:
     return ""
 
 
-def ensure_local_dolma_shard():
-    if not DATA_CACHE_PATH.exists():
+def ensure_local_dolma_shard(rank: int):
+    if rank == 0 and not DATA_CACHE_PATH.exists():
         DATA_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
         log0(f"Downloading Dolma shard to {DATA_CACHE_PATH} ...")
         request = urllib.request.Request(DOLMA_URL, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as response, open(DATA_CACHE_PATH, "wb") as f:
             f.write(response.read())
+
     barrier()
+
     if not DATA_CACHE_PATH.exists():
         raise RuntimeError(f"Missing shard: {DATA_CACHE_PATH}")
     return DATA_CACHE_PATH

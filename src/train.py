@@ -1,3 +1,6 @@
+import math
+import time
+
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -5,12 +8,17 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from activation_store import FrozenActivationModel
 from config import (
+    ADAM_BETA1,
+    ADAM_BETA2,
+    ADAM_EPS,
     BUFFER_CAPACITY,
     HOOK_LAYER_INDEX,
-    LATENT_FACTOR,
+    L0_COEFF,
+    L0_WARMUP_STEPS,
     LOG_EVERY,
     LR,
-    L0_COEFF,
+    LR_WARMUP_START_FACTOR,
+    LR_WARMUP_STEPS,
     MAX_SEQ_LEN,
     MODEL_NAME,
     OUTPUT_DIR,
@@ -22,7 +30,7 @@ from config import (
 )
 from data import ensure_local_dolma_shard, iter_rank_text_batches
 from dist_utils import all_reduce_mean, all_reduce_min_int, cleanup, log0, setup
-from init_stats import estimate_activation_mean
+from init_stats import estimate_activation_stats, profile_token_lengths
 from sae import TinyJumpReLUSAE, module_of, step_ste
 
 
@@ -31,11 +39,12 @@ class ActivationBuffer:
         self.chunks = []
         self.size = 0
 
-    def add(self, x: torch.Tensor, mask: torch.Tensor):
+    def add(self, x: torch.Tensor, mask: torch.Tensor, scale: float):
         valid = x[mask]
         if valid.numel() == 0:
             return
-        self.chunks.append(valid.detach().cpu())
+        valid = (valid / scale).detach().cpu()
+        self.chunks.append(valid)
         self.size += valid.shape[0]
 
     def ready(self, device: torch.device):
@@ -56,7 +65,38 @@ class ActivationBuffer:
             yield take[i:i + SAE_BATCH_SIZE].to(device, non_blocking=True)
 
 
-def save_checkpoint(path, step: int, sae_model: nn.Module, optimizer: torch.optim.Optimizer):
+def lr_for_step(step: int):
+    if step <= 0:
+        return LR * LR_WARMUP_START_FACTOR
+
+    if LR_WARMUP_STEPS > 0 and step <= LR_WARMUP_STEPS:
+        progress = step / LR_WARMUP_STEPS
+        factor = LR_WARMUP_START_FACTOR + (1.0 - LR_WARMUP_START_FACTOR) * progress
+        return LR * factor
+
+    if TRAIN_STEPS <= LR_WARMUP_STEPS:
+        return LR
+
+    progress = (step - LR_WARMUP_STEPS) / max(1, TRAIN_STEPS - LR_WARMUP_STEPS)
+    progress = min(max(progress, 0.0), 1.0)
+    return LR * 0.5 * (1.0 + math.cos(math.pi * progress))
+
+
+def l0_coeff_for_step(step: int):
+    if L0_WARMUP_STEPS <= 0:
+        return L0_COEFF
+    progress = min(max(step / L0_WARMUP_STEPS, 0.0), 1.0)
+    return L0_COEFF * progress
+
+
+def save_checkpoint(
+    path,
+    step: int,
+    sae_model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    activation_scale: float,
+    token_stats: dict,
+):
     if dist.get_rank() != 0:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -68,7 +108,8 @@ def save_checkpoint(path, step: int, sae_model: nn.Module, optimizer: torch.opti
             "model_name": MODEL_NAME,
             "hook_layer_index": HOOK_LAYER_INDEX,
             "max_seq_len": MAX_SEQ_LEN,
-            "latent_factor": LATENT_FACTOR,
+            "activation_scale": activation_scale,
+            "token_stats": token_stats,
         },
         path,
     )
@@ -80,7 +121,7 @@ def train():
     rank, local_rank, world_size, device, model_dtype = setup()
     log0(f"Rank {rank}/{world_size} | device: {device}")
 
-    shard_path = ensure_local_dolma_shard()
+    shard_path = ensure_local_dolma_shard(rank)
 
     if rank == 0:
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -88,9 +129,21 @@ def train():
     activation_model = None
 
     try:
-        activation_model = FrozenActivationModel(device=device, model_dtype=model_dtype)
+        activation_model = FrozenActivationModel(
+            device=device,
+            model_dtype=model_dtype,
+            hook_layer_index=HOOK_LAYER_INDEX,
+        )
 
-        mean_vec = estimate_activation_mean(
+        token_stats = profile_token_lengths(
+            activation_model=activation_model,
+            shard_path=shard_path,
+            rank=rank,
+            world_size=world_size,
+            device=device,
+        )
+
+        mean_vec, activation_scale = estimate_activation_stats(
             activation_model=activation_model,
             shard_path=shard_path,
             rank=rank,
@@ -102,7 +155,7 @@ def train():
 
         base_sae = TinyJumpReLUSAE(d_in=d_in).to(device=device, dtype=torch.float32)
         with torch.no_grad():
-            base_sae.b_dec.copy_(mean_vec.to(device=device, dtype=torch.float32))
+            base_sae.b_dec.copy_((mean_vec / activation_scale).to(device=device, dtype=torch.float32))
 
         sae_model = DDP(
             base_sae,
@@ -112,13 +165,23 @@ def train():
             find_unused_parameters=False,
         )
 
-        optimizer = torch.optim.Adam(sae_model.parameters(), lr=LR, betas=(0.0, 0.999))
+        optimizer = torch.optim.Adam(
+            sae_model.parameters(),
+            lr=LR * LR_WARMUP_START_FACTOR,
+            betas=(ADAM_BETA1, ADAM_BETA2),
+            eps=ADAM_EPS,
+        )
+
         buffer = ActivationBuffer()
         step = 0
         epoch = 0
+        last_log_time = time.perf_counter()
 
         log0(
-            f"Training | jumprelu | total_steps={TRAIN_STEPS} | text_batch={TEXT_BATCH_SIZE_PER_RANK} | sae_batch={SAE_BATCH_SIZE} | buffer={BUFFER_CAPACITY}"
+            "Training | jumprelu | "
+            f"total_steps={TRAIN_STEPS} | text_batch={TEXT_BATCH_SIZE_PER_RANK} | "
+            f"sae_batch={SAE_BATCH_SIZE} | buffer={BUFFER_CAPACITY} | "
+            f"activation_scale={activation_scale:.6f}"
         )
 
         while step < TRAIN_STEPS:
@@ -136,20 +199,25 @@ def train():
                 act, mask = activation_model.capture_text_batch(texts)
                 x = act.reshape(-1, d_in)
                 mask_flat = mask.reshape(-1)
-                buffer.add(x, mask_flat)
+                buffer.add(x, mask_flat, activation_scale)
 
                 if not buffer.ready(device):
                     continue
 
                 for x_batch in buffer.pop_batches(device):
-                    step += 1
+                    current_step = step + 1
+                    current_lr = lr_for_step(current_step)
+                    current_l0_coeff = l0_coeff_for_step(current_step)
+
+                    for group in optimizer.param_groups:
+                        group["lr"] = current_lr
 
                     x_hat, pre = sae_model(x_batch)
                     sae_base = module_of(sae_model)
 
                     recon_loss = ((x_hat - x_batch) ** 2).mean()
                     l0 = step_ste(pre, sae_base.threshold(), STE_BANDWIDTH).sum(dim=-1).mean()
-                    loss = recon_loss + L0_COEFF * l0
+                    loss = recon_loss + current_l0_coeff * l0
 
                     optimizer.zero_grad(set_to_none=True)
                     loss.backward()
@@ -157,12 +225,26 @@ def train():
                     optimizer.step()
                     sae_base.normalise_decoder()
 
+                    step = current_step
+
                     if step == 1 or step % LOG_EVERY == 0 or step == TRAIN_STEPS:
+                        now = time.perf_counter()
+                        dt = max(now - last_log_time, 1e-8)
+                        steps_per_sec = LOG_EVERY / dt if step > 1 else 0.0
+                        last_log_time = now
+
                         recon_mean = float(all_reduce_mean(recon_loss).item())
                         l0_mean = float(all_reduce_mean(l0).item())
                         theta_mean = float(sae_base.threshold().mean().item())
                         log0(
-                            f"step={step:05d}/{TRAIN_STEPS} epoch={epoch} recon={recon_mean:.6f} avg_l0={l0_mean:.3f} theta_mean={theta_mean:.6f}"
+                            f"step={step:06d}/{TRAIN_STEPS} "
+                            f"epoch={epoch} "
+                            f"lr={current_lr:.2e} "
+                            f"lambda={current_l0_coeff:.2e} "
+                            f"recon={recon_mean:.6f} "
+                            f"avg_l0={l0_mean:.3f} "
+                            f"theta_mean={theta_mean:.6f} "
+                            f"steps_per_sec={steps_per_sec:.2f}"
                         )
 
                     if step % SAVE_EVERY == 0 or step == TRAIN_STEPS:
@@ -171,6 +253,8 @@ def train():
                             step,
                             sae_model,
                             optimizer,
+                            activation_scale,
+                            token_stats,
                         )
 
                     if step >= TRAIN_STEPS:
