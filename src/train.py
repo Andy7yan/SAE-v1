@@ -14,6 +14,7 @@ from config import (
     ADAM_EPS,
     BUFFER_CAPACITY,
     HOOK_LAYER_INDEX,
+    INIT_STATS_CACHE_PATH,
     L0_COEFF,
     L0_WARMUP_STEPS,
     LOG_EVERY,
@@ -27,11 +28,13 @@ from config import (
     SAVE_EVERY,
     STE_BANDWIDTH,
     TEXT_BATCH_SIZE_PER_RANK,
+    TEXT_PREFETCH_BACKEND,
+    TEXT_PREFETCH_BATCHES,
     TRAIN_STEPS,
 )
-from data import ensure_local_dolma_shard, iter_prefetched_rank_text_batches, iter_rank_text_batches
+from data import ensure_local_dolma_shard, iter_text_batches
 from dist_utils import all_reduce_mean, all_reduce_min_int, cleanup, log0, setup
-from init_stats import estimate_activation_stats, profile_token_lengths
+from init_stats import load_or_compute_init_stats
 from sae import TinyJumpReLUSAE, module_of, step_ste
 
 
@@ -137,20 +140,13 @@ def train() -> None:
             hook_layer_index=HOOK_LAYER_INDEX,
         )
 
-        token_stats = profile_token_lengths(
+        mean_vec, activation_scale, token_stats = load_or_compute_init_stats(
             activation_model=activation_model,
             shard_path=shard_path,
             rank=rank,
             world_size=world_size,
             device=device,
-        )
-
-        mean_vec, activation_scale = estimate_activation_stats(
-            activation_model=activation_model,
-            shard_path=shard_path,
-            rank=rank,
-            world_size=world_size,
-            device=device,
+            cache_path=INIT_STATS_CACHE_PATH,
         )
 
         d_in = int(mean_vec.numel())
@@ -186,19 +182,21 @@ def train() -> None:
             f"sae_batch={SAE_BATCH_SIZE} | "
             f"buffer={BUFFER_CAPACITY} | "
             f"activation_scale={activation_scale:.6f} | "
-            "text_prefetch=on"
+            f"text_prefetch={TEXT_PREFETCH_BACKEND}({TEXT_PREFETCH_BATCHES}) | "
+            f"init_stats_cache={INIT_STATS_CACHE_PATH}"
         )
 
         while step < TRAIN_STEPS:
             epoch += 1
             local_batches_this_epoch = 0
 
-            for texts in iter_prefetched_rank_text_batches(
+            for texts in iter_text_batches(
                 shard_path=shard_path,
                 local_batch_size=TEXT_BATCH_SIZE_PER_RANK,
                 rank=rank,
                 world_size=world_size,
-                prefetch_batches=4,
+                prefetch_batches=TEXT_PREFETCH_BATCHES,
+                prefetch_backend=TEXT_PREFETCH_BACKEND,
             ):
                 local_batches_this_epoch += 1
 
