@@ -1,4 +1,5 @@
 import math
+from typing import TypeVar, cast
 
 import torch
 import torch.nn as nn
@@ -8,13 +9,13 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from config import INIT_THRESHOLD, LATENT_DIM, LATENT_FACTOR, STE_BANDWIDTH
 
 
-def rectangle_window(x: torch.Tensor):
+def rectangle_window(x: torch.Tensor) -> torch.Tensor:
     return ((x > -0.5) & (x < 0.5)).to(x.dtype)
 
 
 class StepSTE(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, x: torch.Tensor, threshold: torch.Tensor, bandwidth: float):
+    def forward(ctx, x: torch.Tensor, threshold: torch.Tensor, bandwidth: float) -> torch.Tensor:
         ctx.save_for_backward(x, threshold)
         ctx.bandwidth = bandwidth
         return (x > threshold).to(x.dtype)
@@ -31,7 +32,7 @@ class StepSTE(torch.autograd.Function):
 
 class JumpReLUSTE(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, x: torch.Tensor, threshold: torch.Tensor, bandwidth: float):
+    def forward(ctx, x: torch.Tensor, threshold: torch.Tensor, bandwidth: float) -> torch.Tensor:
         ctx.save_for_backward(x, threshold)
         ctx.bandwidth = bandwidth
         return x * (x > threshold).to(x.dtype)
@@ -47,11 +48,11 @@ class JumpReLUSTE(torch.autograd.Function):
         return x_grad, threshold_grad, None
 
 
-def step_ste(x: torch.Tensor, threshold: torch.Tensor, bandwidth: float):
+def step_ste(x: torch.Tensor, threshold: torch.Tensor, bandwidth: float) -> torch.Tensor:
     return StepSTE.apply(x, threshold, bandwidth)
 
 
-def jumprelu_ste(x: torch.Tensor, threshold: torch.Tensor, bandwidth: float):
+def jumprelu_ste(x: torch.Tensor, threshold: torch.Tensor, bandwidth: float) -> torch.Tensor:
     return JumpReLUSTE.apply(x, threshold, bandwidth)
 
 
@@ -82,29 +83,32 @@ class TinyJumpReLUSAE(nn.Module):
         with torch.no_grad():
             self.W_enc.copy_(self.W_dec.T)
 
-    def threshold(self):
+    def get_threshold(self) -> torch.Tensor:
         return torch.exp(self.log_threshold)
 
     @torch.no_grad()
-    def normalise_decoder(self):
+    def normalise_decoder(self) -> None:
         self.W_dec.div_(self.W_dec.norm(dim=0, keepdim=True).clamp(min=1e-8))
 
     @torch.no_grad()
-    def remove_decoder_grad_parallel(self):
+    def remove_decoder_grad_parallel(self) -> None:
         if self.W_dec.grad is None:
             return
         unit = self.W_dec / self.W_dec.norm(dim=0, keepdim=True).clamp(min=1e-8)
         self.W_dec.grad.sub_((self.W_dec.grad * unit).sum(dim=0, keepdim=True) * unit)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         x_in = x - self.b_dec
         pre = F.relu(x_in @ self.W_enc.T + self.b_enc)
-        z = jumprelu_ste(pre, self.threshold(), STE_BANDWIDTH)
+        z = jumprelu_ste(pre, self.get_threshold(), STE_BANDWIDTH)
         x_hat = z @ self.W_dec.T + self.b_dec
         return x_hat, pre
 
 
-def module_of(model: nn.Module):
+TModule = TypeVar("TModule", bound=nn.Module)
+
+
+def module_of(model: TModule | DDP) -> TModule:
     if isinstance(model, DDP):
-        return model.module
+        return cast(TModule, model.module)
     return model

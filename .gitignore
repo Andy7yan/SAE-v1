@@ -17,4 +17,3 @@ __pycache__/
 *.json
 *.gz
 *.OU
-train-log

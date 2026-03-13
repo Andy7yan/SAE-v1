@@ -1,5 +1,7 @@
 import gzip
 import json
+import queue
+import threading
 import urllib.request
 from pathlib import Path
 
@@ -53,3 +55,74 @@ def iter_rank_text_batches(shard_path: Path, local_batch_size: int, rank: int, w
                 if len(assigned) == local_batch_size:
                     yield assigned
                     assigned = []
+
+
+def iter_prefetched_rank_text_batches(
+    shard_path: Path,
+    local_batch_size: int,
+    rank: int,
+    world_size: int,
+    prefetch_batches: int = 4,
+):
+    if prefetch_batches <= 0:
+        yield from iter_rank_text_batches(
+            shard_path=shard_path,
+            local_batch_size=local_batch_size,
+            rank=rank,
+            world_size=world_size,
+        )
+        return
+
+    out_queue: queue.Queue[tuple[str, object]] = queue.Queue(maxsize=max(1, prefetch_batches))
+    stop_event = threading.Event()
+
+    def put_item(tag: str, payload: object) -> bool:
+        while not stop_event.is_set():
+            try:
+                out_queue.put((tag, payload), timeout=0.1)
+                return True
+            except queue.Full:
+                continue
+        return False
+
+    def producer() -> None:
+        try:
+            for batch in iter_rank_text_batches(
+                shard_path=shard_path,
+                local_batch_size=local_batch_size,
+                rank=rank,
+                world_size=world_size,
+            ):
+                if not put_item("batch", batch):
+                    return
+        except BaseException as exc:
+            put_item("error", exc)
+            return
+
+        put_item("done", None)
+
+    worker = threading.Thread(
+        target=producer,
+        name=f"rank_text_prefetch_r{rank}",
+        daemon=True,
+    )
+    worker.start()
+
+    try:
+        while True:
+            tag, payload = out_queue.get()
+
+            if tag == "batch":
+                yield payload
+                continue
+
+            if tag == "error":
+                raise RuntimeError("Background text prefetch failed.") from payload
+
+            if tag == "done":
+                break
+
+            raise RuntimeError(f"Unknown prefetch queue tag: {tag}")
+    finally:
+        stop_event.set()
+        worker.join(timeout=1.0)

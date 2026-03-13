@@ -1,7 +1,8 @@
 import os
+from typing import Any, cast
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel
 
 from config import MAX_SEQ_LEN, MODEL_NAME, TOKEN_LENGTH_PROBE_MAX_LEN
 from dist_utils import log0
@@ -30,17 +31,21 @@ class FrozenActivationModel:
         }
 
         log0(f"Loading {MODEL_NAME} (frozen) ...")
-        self.model = AutoModelForCausalLM.from_pretrained(
+        loaded_model = AutoModelForCausalLM.from_pretrained(
             MODEL_NAME,
             token=self.token,
             torch_dtype=model_dtype,
             low_cpu_mem_usage=True,
         )
-        self.model.to(device)
+        self.model: PreTrainedModel = cast(PreTrainedModel, loaded_model)
+        self.model = cast(PreTrainedModel, self.model.to(device))
         self.model.eval()
         self.model.requires_grad_(False)
 
-        self.activation_store = {}
+        self.activation_store: dict[str, torch.Tensor] = {}
+
+        base_model = cast(Any, self.model)
+        target_layer = base_model.model.layers[hook_layer_index]
 
         def hook_fn(module, inputs, output):
             if isinstance(output, (tuple, list)):
@@ -50,7 +55,7 @@ class FrozenActivationModel:
             self.activation_store["act"] = output.detach()
             raise StopForward()
 
-        self.handle = self.model.model.layers[hook_layer_index].register_forward_hook(hook_fn)
+        self.handle = target_layer.register_forward_hook(hook_fn)
         log0(f"Residual-stream hook registered at layer {hook_layer_index}")
 
     def tokenize_text_batch(self, texts: list[str]):
@@ -94,7 +99,7 @@ class FrozenActivationModel:
         }
 
     @torch.no_grad()
-    def capture_text_batch(self, texts: list[str]):
+    def capture_text_batch(self, texts: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
         batch = self.tokenize_text_batch(texts)
         batch = {k: v.to(self.device) for k, v in batch.items()}
 
@@ -116,5 +121,5 @@ class FrozenActivationModel:
         mask = self.build_token_mask(batch)
         return act, mask
 
-    def close(self):
+    def close(self) -> None:
         self.handle.remove()

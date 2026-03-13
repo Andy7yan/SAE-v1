@@ -1,5 +1,6 @@
 import math
 import time
+from pathlib import Path
 
 import torch
 import torch.distributed as dist
@@ -28,7 +29,7 @@ from config import (
     TEXT_BATCH_SIZE_PER_RANK,
     TRAIN_STEPS,
 )
-from data import ensure_local_dolma_shard, iter_rank_text_batches
+from data import ensure_local_dolma_shard, iter_prefetched_rank_text_batches, iter_rank_text_batches
 from dist_utils import all_reduce_mean, all_reduce_min_int, cleanup, log0, setup
 from init_stats import estimate_activation_stats, profile_token_lengths
 from sae import TinyJumpReLUSAE, module_of, step_ste
@@ -36,10 +37,10 @@ from sae import TinyJumpReLUSAE, module_of, step_ste
 
 class ActivationBuffer:
     def __init__(self):
-        self.chunks = []
+        self.chunks: list[torch.Tensor] = []
         self.size = 0
 
-    def add(self, x: torch.Tensor, mask: torch.Tensor, scale: float):
+    def add(self, x: torch.Tensor, mask: torch.Tensor, scale: float) -> None:
         valid = x[mask]
         if valid.numel() == 0:
             return
@@ -47,7 +48,7 @@ class ActivationBuffer:
         self.chunks.append(valid)
         self.size += valid.shape[0]
 
-    def ready(self, device: torch.device):
+    def ready(self, device: torch.device) -> bool:
         return all_reduce_min_int(self.size, device) >= BUFFER_CAPACITY
 
     def pop_batches(self, device: torch.device):
@@ -62,10 +63,10 @@ class ActivationBuffer:
         self.size = int(left.shape[0])
 
         for i in range(0, BUFFER_CAPACITY, SAE_BATCH_SIZE):
-            yield take[i:i + SAE_BATCH_SIZE].to(device, non_blocking=True)
+            yield take[i : i + SAE_BATCH_SIZE].to(device, non_blocking=True)
 
 
-def lr_for_step(step: int):
+def lr_for_step(step: int) -> float:
     if step <= 0:
         return LR * LR_WARMUP_START_FACTOR
 
@@ -82,7 +83,7 @@ def lr_for_step(step: int):
     return LR * 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
-def l0_coeff_for_step(step: int):
+def l0_coeff_for_step(step: int) -> float:
     if L0_WARMUP_STEPS <= 0:
         return L0_COEFF
     progress = min(max(step / L0_WARMUP_STEPS, 0.0), 1.0)
@@ -90,15 +91,16 @@ def l0_coeff_for_step(step: int):
 
 
 def save_checkpoint(
-    path,
+    path: Path,
     step: int,
     sae_model: nn.Module,
     optimizer: torch.optim.Optimizer,
     activation_scale: float,
     token_stats: dict,
-):
+) -> None:
     if dist.get_rank() != 0:
         return
+
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
@@ -115,7 +117,7 @@ def save_checkpoint(
     )
 
 
-def train():
+def train() -> None:
     assert BUFFER_CAPACITY % SAE_BATCH_SIZE == 0
 
     rank, local_rank, world_size, device, model_dtype = setup()
@@ -179,20 +181,24 @@ def train():
 
         log0(
             "Training | jumprelu | "
-            f"total_steps={TRAIN_STEPS} | text_batch={TEXT_BATCH_SIZE_PER_RANK} | "
-            f"sae_batch={SAE_BATCH_SIZE} | buffer={BUFFER_CAPACITY} | "
-            f"activation_scale={activation_scale:.6f}"
+            f"total_steps={TRAIN_STEPS} | "
+            f"text_batch={TEXT_BATCH_SIZE_PER_RANK} | "
+            f"sae_batch={SAE_BATCH_SIZE} | "
+            f"buffer={BUFFER_CAPACITY} | "
+            f"activation_scale={activation_scale:.6f} | "
+            "text_prefetch=on"
         )
 
         while step < TRAIN_STEPS:
             epoch += 1
             local_batches_this_epoch = 0
 
-            for texts in iter_rank_text_batches(
+            for texts in iter_prefetched_rank_text_batches(
                 shard_path=shard_path,
                 local_batch_size=TEXT_BATCH_SIZE_PER_RANK,
                 rank=rank,
                 world_size=world_size,
+                prefetch_batches=4,
             ):
                 local_batches_this_epoch += 1
 
@@ -213,10 +219,10 @@ def train():
                         group["lr"] = current_lr
 
                     x_hat, pre = sae_model(x_batch)
-                    sae_base = module_of(sae_model)
+                    sae_base: TinyJumpReLUSAE = module_of(sae_model)
 
                     recon_loss = ((x_hat - x_batch) ** 2).mean()
-                    l0 = step_ste(pre, sae_base.threshold(), STE_BANDWIDTH).sum(dim=-1).mean()
+                    l0 = step_ste(pre, sae_base.get_threshold(), STE_BANDWIDTH).sum(dim=-1).mean()
                     loss = recon_loss + current_l0_coeff * l0
 
                     optimizer.zero_grad(set_to_none=True)
@@ -235,7 +241,9 @@ def train():
 
                         recon_mean = float(all_reduce_mean(recon_loss).item())
                         l0_mean = float(all_reduce_mean(l0).item())
-                        theta_mean = float(sae_base.threshold().mean().item())
+                        theta_mean = float(sae_base.get_threshold().mean().item())
+                        max_mem_gb = torch.cuda.max_memory_allocated(device) / (1024 ** 3)
+
                         log0(
                             f"step={step:06d}/{TRAIN_STEPS} "
                             f"epoch={epoch} "
@@ -244,7 +252,8 @@ def train():
                             f"recon={recon_mean:.6f} "
                             f"avg_l0={l0_mean:.3f} "
                             f"theta_mean={theta_mean:.6f} "
-                            f"steps_per_sec={steps_per_sec:.2f}"
+                            f"steps_per_sec={steps_per_sec:.2f} "
+                            f"max_mem_gb={max_mem_gb:.2f}"
                         )
 
                     if step % SAVE_EVERY == 0 or step == TRAIN_STEPS:

@@ -46,8 +46,10 @@ def profile_token_lengths(
 
     log0(
         "Token profile | "
-        f"batches={used} | mean_raw_tokens={mean_raw_tokens:.2f} | "
-        f"mean_valid_tokens={mean_valid_tokens:.2f} | truncation_rate={100.0 * truncation_rate:.2f}%"
+        f"batches={used} | "
+        f"mean_raw_tokens={mean_raw_tokens:.2f} | "
+        f"mean_valid_tokens={mean_valid_tokens:.2f} | "
+        f"truncation_rate={100.0 * truncation_rate:.2f}%"
     )
 
     return {
@@ -78,6 +80,7 @@ def estimate_activation_stats(
     ):
         act, mask = activation_model.capture_text_batch(texts)
         d_in = act.shape[-1]
+
         x = act.reshape(-1, d_in)
         mask_flat = mask.reshape(-1).to(device)
         valid = x[mask_flat]
@@ -113,7 +116,10 @@ def estimate_activation_stats(
 
     log0(
         "Activation stats done | "
-        f"batches={used} | valid_tokens={int(total_count.item())} | d_in={d_in} | rms_scale={float(rms_scale.item()):.6f}"
+        f"batches={used} | "
+        f"valid_tokens={int(total_count.item())} | "
+        f"d_in={d_in} | "
+        f"rms_scale={float(rms_scale.item()):.6f}"
     )
 
     return mean, float(rms_scale.item())
