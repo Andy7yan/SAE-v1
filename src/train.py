@@ -24,6 +24,7 @@ from config import (
     MAX_SEQ_LEN,
     MODEL_NAME,
     OUTPUT_DIR,
+    PIN_MEMORY,
     SAE_BATCH_SIZE,
     SAVE_EVERY,
     STE_BANDWIDTH,
@@ -47,7 +48,9 @@ class ActivationBuffer:
         valid = x[mask]
         if valid.numel() == 0:
             return
-        valid = (valid / scale).detach().cpu()
+        valid = (valid / scale).detach().to(device="cpu", dtype=torch.float32)
+        if PIN_MEMORY:
+            valid = valid.pin_memory()
         self.chunks.append(valid)
         self.size += valid.shape[0]
 
@@ -183,6 +186,7 @@ def train() -> None:
             f"buffer={BUFFER_CAPACITY} | "
             f"activation_scale={activation_scale:.6f} | "
             f"text_prefetch={TEXT_PREFETCH_BACKEND}({TEXT_PREFETCH_BATCHES}) | "
+            f"pin_memory={PIN_MEMORY} | "
             f"init_stats_cache={INIT_STATS_CACHE_PATH}"
         )
 
@@ -240,6 +244,7 @@ def train() -> None:
                         recon_mean = float(all_reduce_mean(recon_loss).item())
                         l0_mean = float(all_reduce_mean(l0).item())
                         theta_mean = float(sae_base.get_threshold().mean().item())
+                        active_frac = l0_mean / max(sae_base.d_latent, 1)
                         max_mem_gb = torch.cuda.max_memory_allocated(device) / (1024 ** 3)
 
                         log0(
@@ -248,7 +253,8 @@ def train() -> None:
                             f"lr={current_lr:.2e} "
                             f"lambda={current_l0_coeff:.2e} "
                             f"recon={recon_mean:.6f} "
-                            f"avg_l0={l0_mean:.3f} "
+                            f"avg_l0={l0_mean:.1f} "
+                            f"active_frac={100.0 * active_frac:.2f}% "
                             f"theta_mean={theta_mean:.6f} "
                             f"steps_per_sec={steps_per_sec:.2f} "
                             f"max_mem_gb={max_mem_gb:.2f}"

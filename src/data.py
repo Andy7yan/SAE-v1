@@ -1,5 +1,4 @@
 import gzip
-import json
 import multiprocessing as mp
 import queue
 import threading
@@ -17,6 +16,17 @@ from config import (
     USER_AGENT,
 )
 from dist_utils import barrier, log0
+
+try:
+    import orjson
+
+    def loads_json(line: str):
+        return orjson.loads(line)
+except Exception:
+    import json
+
+    def loads_json(line: str):
+        return json.loads(line)
 
 
 def extract_text(row: dict) -> str:
@@ -48,7 +58,7 @@ def iter_rank_text_batches(shard_path: Path, local_batch_size: int, rank: int, w
     with gzip.open(shard_path, "rt", encoding="utf-8") as gz_file:
         for raw_line in gz_file:
             try:
-                row = json.loads(raw_line)
+                row = loads_json(raw_line)
             except Exception:
                 continue
 

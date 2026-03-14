@@ -22,6 +22,7 @@ class FrozenActivationModel:
         self.tokenizer = AutoTokenizer.from_pretrained(
             MODEL_NAME,
             token=self.token,
+            use_fast=True,
         )
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -64,7 +65,8 @@ class FrozenActivationModel:
             return_tensors="pt",
             truncation=True,
             max_length=MAX_SEQ_LEN,
-            padding="max_length",
+            padding=True,
+            pad_to_multiple_of=8,
         )
         return batch
 
@@ -101,7 +103,7 @@ class FrozenActivationModel:
     @torch.no_grad()
     def capture_text_batch(self, texts: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
         batch = self.tokenize_text_batch(texts)
-        batch = {k: v.to(self.device) for k, v in batch.items()}
+        batch = {k: v.to(self.device, non_blocking=True) for k, v in batch.items()}
 
         self.activation_store.clear()
 

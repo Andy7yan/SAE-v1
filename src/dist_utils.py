@@ -4,7 +4,13 @@ import time
 import torch
 import torch.distributed as dist
 
-from config import SEED
+from config import (
+    RAYON_NUM_THREADS,
+    SEED,
+    TOKENIZERS_PARALLELISM,
+    TORCH_NUM_INTEROP_THREADS,
+    TORCH_NUM_THREADS,
+)
 
 
 def now():
@@ -22,9 +28,17 @@ def setup():
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required.")
 
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", TOKENIZERS_PARALLELISM)
+    os.environ.setdefault("RAYON_NUM_THREADS", str(RAYON_NUM_THREADS))
+
     rank = int(os.environ["RANK"])
     local_rank = int(os.environ["LOCAL_RANK"])
     world_size = int(os.environ["WORLD_SIZE"])
+
+    if TORCH_NUM_THREADS > 0:
+        torch.set_num_threads(TORCH_NUM_THREADS)
+    if TORCH_NUM_INTEROP_THREADS > 0:
+        torch.set_num_interop_threads(TORCH_NUM_INTEROP_THREADS)
 
     dist.init_process_group(backend="nccl")
     torch.cuda.set_device(local_rank)
@@ -36,7 +50,7 @@ def setup():
     torch.cuda.manual_seed_all(SEED)
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
-    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    torch.backends.cudnn.benchmark = True
 
     return rank, local_rank, world_size, device, dtype
 

@@ -1,0 +1,230 @@
+[22:54:20][sae_train] Rank 0/2 | device: cuda:0
+/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[rank0]:[W313 22:54:20.385850601 ProcessGroupNCCL.cpp:5138] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+[22:54:20][sae_train] Loading tokeniser ...
+[22:54:24][sae_train] Loading google/gemma-2-2b-it (frozen) ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/288 [00:00<?, ?it/s]Loading weights: 100%|██████████| 288/288 [00:00<00:00, 35554.37it/s]
+Loading weights:   0%|          | 0/288 [00:00<?, ?it/s]Loading weights: 100%|██████████| 288/288 [00:00<00:00, 38520.35it/s]
+[22:54:40][sae_train] Residual-stream hook registered at layer 12
+[22:54:40][sae_train] Loaded init stats cache from: /srv/scratch/z5534565/sae-v2/outputs/jumprelu_sae_raw_dolma/init_stats.pt
+[22:54:42][sae_train] Training | jumprelu | total_steps=5000 | text_batch=8 | sae_batch=4096 | buffer=65536 | activation_scale=3.572592 | text_prefetch=process(4) | init_stats_cache=/srv/scratch/z5534565/sae-v2/outputs/jumprelu_sae_raw_dolma/init_stats.pt
+[22:59:04][sae_train] step=000001/5000 epoch=1 lr=7.06e-06 lambda=1.00e-07 recon=6.644150 avg_l0=8186.985 theta_mean=0.001000 steps_per_sec=0.00 max_mem_gb=7.46
+[23:02:34][sae_train] step=000020/5000 epoch=1 lr=8.26e-06 lambda=2.00e-06 recon=5.421302 avg_l0=8190.848 theta_mean=0.001000 steps_per_sec=0.10 max_mem_gb=8.02
+[23:05:58][sae_train] step=000040/5000 epoch=1 lr=9.52e-06 lambda=4.00e-06 recon=4.812109 avg_l0=8172.324 theta_mean=0.001000 steps_per_sec=0.10 max_mem_gb=8.02
+[23:09:24][sae_train] step=000060/5000 epoch=1 lr=1.08e-05 lambda=6.00e-06 recon=4.390828 avg_l0=8084.723 theta_mean=0.001000 steps_per_sec=0.10 max_mem_gb=8.02
+[23:12:43][sae_train] step=000080/5000 epoch=1 lr=1.20e-05 lambda=8.00e-06 recon=3.909040 avg_l0=7989.755 theta_mean=0.001000 steps_per_sec=0.10 max_mem_gb=8.02
+[23:19:41][sae_train] step=000100/5000 epoch=1 lr=1.33e-05 lambda=1.00e-05 recon=3.577152 avg_l0=7844.133 theta_mean=0.001000 steps_per_sec=0.05 max_mem_gb=8.02
+[23:22:58][sae_train] step=000120/5000 epoch=1 lr=1.46e-05 lambda=1.20e-05 recon=3.124278 avg_l0=7659.104 theta_mean=0.001000 steps_per_sec=0.10 max_mem_gb=8.02
+[23:25:33][sae_train] step=000140/5000 epoch=1 lr=1.58e-05 lambda=1.40e-05 recon=3.059113 avg_l0=7629.905 theta_mean=0.001001 steps_per_sec=0.13 max_mem_gb=8.02
+[23:28:33][sae_train] step=000160/5000 epoch=1 lr=1.71e-05 lambda=1.60e-05 recon=2.584848 avg_l0=7388.634 theta_mean=0.001001 steps_per_sec=0.11 max_mem_gb=8.02
+[23:35:58][sae_train] step=000180/5000 epoch=1 lr=1.83e-05 lambda=1.80e-05 recon=2.466269 avg_l0=7391.008 theta_mean=0.001001 steps_per_sec=0.04 max_mem_gb=8.02
+[23:39:08][sae_train] step=000200/5000 epoch=1 lr=1.96e-05 lambda=2.00e-05 recon=2.083985 avg_l0=7051.848 theta_mean=0.001001 steps_per_sec=0.10 max_mem_gb=8.02
+[23:42:58][sae_train] step=000220/5000 epoch=1 lr=2.09e-05 lambda=2.20e-05 recon=2.137220 avg_l0=7209.350 theta_mean=0.001001 steps_per_sec=0.09 max_mem_gb=8.02
+[23:45:40][sae_train] step=000240/5000 epoch=1 lr=2.21e-05 lambda=2.40e-05 recon=1.617158 avg_l0=6579.429 theta_mean=0.001002 steps_per_sec=0.12 max_mem_gb=8.02
+[23:52:20][sae_train] step=000260/5000 epoch=1 lr=2.34e-05 lambda=2.60e-05 recon=1.471537 avg_l0=6419.410 theta_mean=0.001002 steps_per_sec=0.05 max_mem_gb=8.02
+[23:56:18][sae_train] step=000280/5000 epoch=1 lr=2.46e-05 lambda=2.80e-05 recon=1.356202 avg_l0=6228.444 theta_mean=0.001003 steps_per_sec=0.08 max_mem_gb=8.02
+[23:59:35][sae_train] step=000300/5000 epoch=1 lr=2.59e-05 lambda=3.00e-05 recon=1.220476 avg_l0=6033.965 theta_mean=0.001003 steps_per_sec=0.10 max_mem_gb=8.02
+[00:03:43][sae_train] step=000320/5000 epoch=1 lr=2.72e-05 lambda=3.20e-05 recon=1.165729 avg_l0=5915.631 theta_mean=0.001003 steps_per_sec=0.08 max_mem_gb=8.02
+[00:11:58][sae_train] step=000340/5000 epoch=1 lr=2.84e-05 lambda=3.40e-05 recon=0.902130 avg_l0=5519.266 theta_mean=0.001004 steps_per_sec=0.04 max_mem_gb=8.02
+[00:16:20][sae_train] step=000360/5000 epoch=1 lr=2.97e-05 lambda=3.60e-05 recon=1.082670 avg_l0=5831.065 theta_mean=0.001004 steps_per_sec=0.08 max_mem_gb=8.02
+[00:21:21][sae_train] step=000380/5000 epoch=2 lr=3.09e-05 lambda=3.80e-05 recon=1.473345 avg_l0=6733.428 theta_mean=0.001005 steps_per_sec=0.07 max_mem_gb=8.02
+[00:24:46][sae_train] step=000400/5000 epoch=2 lr=3.22e-05 lambda=4.00e-05 recon=1.544110 avg_l0=7303.117 theta_mean=0.001006 steps_per_sec=0.10 max_mem_gb=8.02
+[00:31:30][sae_train] step=000420/5000 epoch=2 lr=3.35e-05 lambda=4.20e-05 recon=1.065628 avg_l0=6435.302 theta_mean=0.001006 steps_per_sec=0.05 max_mem_gb=8.02
+[00:35:02][sae_train] step=000440/5000 epoch=2 lr=3.47e-05 lambda=4.40e-05 recon=0.997618 avg_l0=6328.296 theta_mean=0.001007 steps_per_sec=0.09 max_mem_gb=8.02
+[00:38:07][sae_train] step=000460/5000 epoch=2 lr=3.60e-05 lambda=4.60e-05 recon=0.815402 avg_l0=5877.372 theta_mean=0.001008 steps_per_sec=0.11 max_mem_gb=8.02
+[00:41:37][sae_train] step=000480/5000 epoch=2 lr=3.72e-05 lambda=4.80e-05 recon=0.703153 avg_l0=5506.027 theta_mean=0.001008 steps_per_sec=0.10 max_mem_gb=8.02
+[00:48:10][sae_train] step=000500/5000 epoch=2 lr=3.85e-05 lambda=5.00e-05 recon=0.720735 avg_l0=5588.011 theta_mean=0.001009 steps_per_sec=0.05 max_mem_gb=8.02
+[00:50:41][sae_train] step=000520/5000 epoch=2 lr=3.98e-05 lambda=5.20e-05 recon=0.605615 avg_l0=5312.978 theta_mean=0.001010 steps_per_sec=0.13 max_mem_gb=8.02
+[00:53:43][sae_train] step=000540/5000 epoch=2 lr=4.10e-05 lambda=5.40e-05 recon=0.519152 avg_l0=5070.053 theta_mean=0.001011 steps_per_sec=0.11 max_mem_gb=8.02
+[00:56:57][sae_train] step=000560/5000 epoch=2 lr=4.23e-05 lambda=5.60e-05 recon=0.556080 avg_l0=5146.036 theta_mean=0.001012 steps_per_sec=0.10 max_mem_gb=8.02
+[01:04:39][sae_train] step=000580/5000 epoch=2 lr=4.35e-05 lambda=5.80e-05 recon=0.441740 avg_l0=4776.808 theta_mean=0.001012 steps_per_sec=0.04 max_mem_gb=8.02
+[01:07:50][sae_train] step=000600/5000 epoch=2 lr=4.48e-05 lambda=6.00e-05 recon=0.497334 avg_l0=4964.152 theta_mean=0.001013 steps_per_sec=0.10 max_mem_gb=8.02
+[01:10:34][sae_train] step=000620/5000 epoch=2 lr=4.61e-05 lambda=6.20e-05 recon=0.309947 avg_l0=4250.453 theta_mean=0.001014 steps_per_sec=0.12 max_mem_gb=8.02
+[01:13:46][sae_train] step=000640/5000 epoch=2 lr=4.73e-05 lambda=6.40e-05 recon=0.319910 avg_l0=4249.177 theta_mean=0.001015 steps_per_sec=0.10 max_mem_gb=8.02
+[01:21:12][sae_train] step=000660/5000 epoch=2 lr=4.86e-05 lambda=6.60e-05 recon=0.302657 avg_l0=4175.931 theta_mean=0.001016 steps_per_sec=0.04 max_mem_gb=8.02
+[01:24:47][sae_train] step=000680/5000 epoch=2 lr=4.98e-05 lambda=6.80e-05 recon=0.290142 avg_l0=4037.146 theta_mean=0.001017 steps_per_sec=0.09 max_mem_gb=8.02
+[01:28:57][sae_train] step=000700/5000 epoch=2 lr=5.11e-05 lambda=7.00e-05 recon=0.300876 avg_l0=4083.975 theta_mean=0.001018 steps_per_sec=0.08 max_mem_gb=8.02
+[01:33:04][sae_train] step=000720/5000 epoch=2 lr=5.24e-05 lambda=7.20e-05 recon=0.256998 avg_l0=3861.336 theta_mean=0.001019 steps_per_sec=0.08 max_mem_gb=8.02
+[01:41:37][sae_train] step=000740/5000 epoch=2 lr=5.36e-05 lambda=7.40e-05 recon=0.289275 avg_l0=4021.333 theta_mean=0.001020 steps_per_sec=0.04 max_mem_gb=8.02
+[01:46:18][sae_train] step=000760/5000 epoch=3 lr=5.49e-05 lambda=7.60e-05 recon=0.664055 avg_l0=5940.193 theta_mean=0.001022 steps_per_sec=0.07 max_mem_gb=8.02
+[01:49:32][sae_train] step=000780/5000 epoch=3 lr=5.61e-05 lambda=7.80e-05 recon=0.443872 avg_l0=5437.665 theta_mean=0.001023 steps_per_sec=0.10 max_mem_gb=8.02
+[01:53:04][sae_train] step=000800/5000 epoch=3 lr=5.74e-05 lambda=8.00e-05 recon=0.374827 avg_l0=5146.541 theta_mean=0.001024 steps_per_sec=0.09 max_mem_gb=8.02
+[01:59:53][sae_train] step=000820/5000 epoch=3 lr=5.87e-05 lambda=8.20e-05 recon=0.295560 avg_l0=4582.021 theta_mean=0.001026 steps_per_sec=0.05 max_mem_gb=8.02
+[02:03:07][sae_train] step=000840/5000 epoch=3 lr=5.99e-05 lambda=8.40e-05 recon=0.232043 avg_l0=4037.115 theta_mean=0.001027 steps_per_sec=0.10 max_mem_gb=8.02
+[02:06:38][sae_train] step=000860/5000 epoch=3 lr=6.12e-05 lambda=8.60e-05 recon=0.286839 avg_l0=4403.649 theta_mean=0.001028 steps_per_sec=0.09 max_mem_gb=8.02
+[02:09:58][sae_train] step=000880/5000 epoch=3 lr=6.24e-05 lambda=8.80e-05 recon=0.224594 avg_l0=3991.024 theta_mean=0.001030 steps_per_sec=0.10 max_mem_gb=8.02
+[02:15:24][sae_train] step=000900/5000 epoch=3 lr=6.37e-05 lambda=9.00e-05 recon=0.199805 avg_l0=3778.692 theta_mean=0.001031 steps_per_sec=0.06 max_mem_gb=8.02
+[02:18:45][sae_train] step=000920/5000 epoch=3 lr=6.50e-05 lambda=9.20e-05 recon=0.214495 avg_l0=3850.434 theta_mean=0.001032 steps_per_sec=0.10 max_mem_gb=8.02
+[02:22:40][sae_train] step=000940/5000 epoch=3 lr=6.62e-05 lambda=9.40e-05 recon=0.201381 avg_l0=3787.875 theta_mean=0.001034 steps_per_sec=0.08 max_mem_gb=8.02
+[02:25:53][sae_train] step=000960/5000 epoch=3 lr=6.75e-05 lambda=9.60e-05 recon=0.197082 avg_l0=3821.183 theta_mean=0.001035 steps_per_sec=0.10 max_mem_gb=8.02
+[02:32:25][sae_train] step=000980/5000 epoch=3 lr=6.87e-05 lambda=9.80e-05 recon=0.159630 avg_l0=3436.822 theta_mean=0.001037 steps_per_sec=0.05 max_mem_gb=8.02
+[02:35:24][sae_train] step=001000/5000 epoch=3 lr=7.00e-05 lambda=1.00e-04 recon=0.152927 avg_l0=3375.135 theta_mean=0.001038 steps_per_sec=0.11 max_mem_gb=8.02
+[02:38:52][sae_train] step=001020/5000 epoch=3 lr=7.00e-05 lambda=1.02e-04 recon=0.153339 avg_l0=3421.807 theta_mean=0.001040 steps_per_sec=0.10 max_mem_gb=8.02
+[02:42:58][sae_train] step=001040/5000 epoch=3 lr=7.00e-05 lambda=1.04e-04 recon=0.151771 avg_l0=3435.596 theta_mean=0.001041 steps_per_sec=0.08 max_mem_gb=8.02
+[02:50:02][sae_train] step=001060/5000 epoch=3 lr=7.00e-05 lambda=1.06e-04 recon=0.158311 avg_l0=3472.726 theta_mean=0.001043 steps_per_sec=0.05 max_mem_gb=8.02
+[02:54:16][sae_train] step=001080/5000 epoch=3 lr=6.99e-05 lambda=1.08e-04 recon=0.147296 avg_l0=3360.159 theta_mean=0.001044 steps_per_sec=0.08 max_mem_gb=8.02
+[02:58:17][sae_train] step=001100/5000 epoch=3 lr=6.99e-05 lambda=1.10e-04 recon=0.141593 avg_l0=3296.331 theta_mean=0.001046 steps_per_sec=0.08 max_mem_gb=8.02
+[03:02:30][sae_train] step=001120/5000 epoch=3 lr=6.98e-05 lambda=1.12e-04 recon=0.153187 avg_l0=3533.441 theta_mean=0.001047 steps_per_sec=0.08 max_mem_gb=8.02
+[03:11:14][sae_train] step=001140/5000 epoch=4 lr=6.98e-05 lambda=1.14e-04 recon=0.261666 avg_l0=4677.101 theta_mean=0.001049 steps_per_sec=0.04 max_mem_gb=8.02
+[03:14:45][sae_train] step=001160/5000 epoch=4 lr=6.97e-05 lambda=1.16e-04 recon=0.204296 avg_l0=4260.281 theta_mean=0.001051 steps_per_sec=0.09 max_mem_gb=8.02
+[03:18:07][sae_train] step=001180/5000 epoch=4 lr=6.97e-05 lambda=1.18e-04 recon=0.167370 avg_l0=3889.449 theta_mean=0.001053 steps_per_sec=0.10 max_mem_gb=8.02
+[03:21:28][sae_train] step=001200/5000 epoch=4 lr=6.96e-05 lambda=1.20e-04 recon=0.154626 avg_l0=3698.290 theta_mean=0.001054 steps_per_sec=0.10 max_mem_gb=8.02
+[03:28:12][sae_train] step=001220/5000 epoch=4 lr=6.95e-05 lambda=1.22e-04 recon=0.143081 avg_l0=3482.248 theta_mean=0.001056 steps_per_sec=0.05 max_mem_gb=8.02
+[03:31:38][sae_train] step=001240/5000 epoch=4 lr=6.94e-05 lambda=1.24e-04 recon=0.152827 avg_l0=3647.098 theta_mean=0.001058 steps_per_sec=0.10 max_mem_gb=8.02
+[03:34:46][sae_train] step=001260/5000 epoch=4 lr=6.93e-05 lambda=1.26e-04 recon=0.136843 avg_l0=3460.115 theta_mean=0.001059 steps_per_sec=0.11 max_mem_gb=8.02
+[03:37:24][sae_train] step=001280/5000 epoch=4 lr=6.92e-05 lambda=1.28e-04 recon=0.139275 avg_l0=3409.489 theta_mean=0.001061 steps_per_sec=0.13 max_mem_gb=8.02
+[03:43:29][sae_train] step=001300/5000 epoch=4 lr=6.90e-05 lambda=1.30e-04 recon=0.140482 avg_l0=3498.541 theta_mean=0.001062 steps_per_sec=0.05 max_mem_gb=8.02
+[03:47:39][sae_train] step=001320/5000 epoch=4 lr=6.89e-05 lambda=1.32e-04 recon=0.127841 avg_l0=3391.438 theta_mean=0.001064 steps_per_sec=0.08 max_mem_gb=8.02
+[03:50:39][sae_train] step=001340/5000 epoch=4 lr=6.88e-05 lambda=1.34e-04 recon=0.121462 avg_l0=3319.612 theta_mean=0.001065 steps_per_sec=0.11 max_mem_gb=8.02
+[03:54:28][sae_train] step=001360/5000 epoch=4 lr=6.86e-05 lambda=1.36e-04 recon=0.131157 avg_l0=3479.740 theta_mean=0.001067 steps_per_sec=0.09 max_mem_gb=8.02
+[04:00:13][sae_train] step=001380/5000 epoch=4 lr=6.85e-05 lambda=1.38e-04 recon=0.112626 avg_l0=3234.817 theta_mean=0.001068 steps_per_sec=0.06 max_mem_gb=8.02
+[04:04:28][sae_train] step=001400/5000 epoch=4 lr=6.83e-05 lambda=1.40e-04 recon=0.111258 avg_l0=3273.490 theta_mean=0.001070 steps_per_sec=0.08 max_mem_gb=8.02
+[04:07:47][sae_train] step=001420/5000 epoch=4 lr=6.81e-05 lambda=1.42e-04 recon=0.107750 avg_l0=3221.221 theta_mean=0.001072 steps_per_sec=0.10 max_mem_gb=8.02
+[04:11:14][sae_train] step=001440/5000 epoch=4 lr=6.79e-05 lambda=1.44e-04 recon=0.108291 avg_l0=3218.540 theta_mean=0.001073 steps_per_sec=0.10 max_mem_gb=8.02
+[04:19:33][sae_train] step=001460/5000 epoch=4 lr=6.77e-05 lambda=1.46e-04 recon=0.108555 avg_l0=3189.174 theta_mean=0.001075 steps_per_sec=0.04 max_mem_gb=8.02
+[04:23:43][sae_train] step=001480/5000 epoch=4 lr=6.75e-05 lambda=1.48e-04 recon=0.101355 avg_l0=3177.211 theta_mean=0.001076 steps_per_sec=0.08 max_mem_gb=8.02
+[04:28:14][sae_train] step=001500/5000 epoch=4 lr=6.73e-05 lambda=1.50e-04 recon=0.119259 avg_l0=3467.729 theta_mean=0.001078 steps_per_sec=0.07 max_mem_gb=8.02
+[04:32:51][sae_train] step=001520/5000 epoch=5 lr=6.71e-05 lambda=1.52e-04 recon=0.167507 avg_l0=4188.190 theta_mean=0.001080 steps_per_sec=0.07 max_mem_gb=8.02
+[04:39:47][sae_train] step=001540/5000 epoch=5 lr=6.69e-05 lambda=1.54e-04 recon=0.136585 avg_l0=3881.332 theta_mean=0.001081 steps_per_sec=0.05 max_mem_gb=8.02
+[04:43:03][sae_train] step=001560/5000 epoch=5 lr=6.67e-05 lambda=1.56e-04 recon=0.118806 avg_l0=3612.087 theta_mean=0.001083 steps_per_sec=0.10 max_mem_gb=8.02
+[04:46:36][sae_train] step=001580/5000 epoch=5 lr=6.64e-05 lambda=1.58e-04 recon=0.107403 avg_l0=3425.580 theta_mean=0.001085 steps_per_sec=0.09 max_mem_gb=8.02
+[04:49:49][sae_train] step=001600/5000 epoch=5 lr=6.62e-05 lambda=1.60e-04 recon=0.108042 avg_l0=3391.748 theta_mean=0.001087 steps_per_sec=0.10 max_mem_gb=8.02
+[04:56:39][sae_train] step=001620/5000 epoch=5 lr=6.59e-05 lambda=1.62e-04 recon=0.115240 avg_l0=3539.115 theta_mean=0.001088 steps_per_sec=0.05 max_mem_gb=8.02
+[04:59:34][sae_train] step=001640/5000 epoch=5 lr=6.57e-05 lambda=1.64e-04 recon=0.104546 avg_l0=3301.434 theta_mean=0.001090 steps_per_sec=0.11 max_mem_gb=8.02
+[05:02:14][sae_train] step=001660/5000 epoch=5 lr=6.54e-05 lambda=1.66e-04 recon=0.101207 avg_l0=3326.432 theta_mean=0.001091 steps_per_sec=0.13 max_mem_gb=8.02
+[05:05:31][sae_train] step=001680/5000 epoch=5 lr=6.51e-05 lambda=1.68e-04 recon=0.101509 avg_l0=3332.316 theta_mean=0.001093 steps_per_sec=0.10 max_mem_gb=8.02
+[05:12:45][sae_train] step=001700/5000 epoch=5 lr=6.48e-05 lambda=1.70e-04 recon=0.097752 avg_l0=3363.206 theta_mean=0.001094 steps_per_sec=0.05 max_mem_gb=8.02
+[05:16:22][sae_train] step=001720/5000 epoch=5 lr=6.46e-05 lambda=1.72e-04 recon=0.102948 avg_l0=3381.438 theta_mean=0.001096 steps_per_sec=0.09 max_mem_gb=8.02
+[05:19:20][sae_train] step=001740/5000 epoch=5 lr=6.43e-05 lambda=1.74e-04 recon=0.092841 avg_l0=3262.018 theta_mean=0.001098 steps_per_sec=0.11 max_mem_gb=8.02
+[05:22:15][sae_train] step=001760/5000 epoch=5 lr=6.39e-05 lambda=1.76e-04 recon=0.086454 avg_l0=3196.292 theta_mean=0.001099 steps_per_sec=0.11 max_mem_gb=8.02
+[05:29:35][sae_train] step=001780/5000 epoch=5 lr=6.36e-05 lambda=1.78e-04 recon=0.087060 avg_l0=3243.773 theta_mean=0.001101 steps_per_sec=0.05 max_mem_gb=8.02
+[05:32:50][sae_train] step=001800/5000 epoch=5 lr=6.33e-05 lambda=1.80e-04 recon=0.085901 avg_l0=3213.881 theta_mean=0.001102 steps_per_sec=0.10 max_mem_gb=8.02
+[05:36:46][sae_train] step=001820/5000 epoch=5 lr=6.30e-05 lambda=1.82e-04 recon=0.085717 avg_l0=3254.809 theta_mean=0.001104 steps_per_sec=0.08 max_mem_gb=8.02
+[05:40:52][sae_train] step=001840/5000 epoch=5 lr=6.27e-05 lambda=1.84e-04 recon=0.090770 avg_l0=3309.101 theta_mean=0.001105 steps_per_sec=0.08 max_mem_gb=8.02
+[05:48:59][sae_train] step=001860/5000 epoch=5 lr=6.23e-05 lambda=1.86e-04 recon=0.087251 avg_l0=3339.191 theta_mean=0.001107 steps_per_sec=0.04 max_mem_gb=8.02
+[05:54:21][sae_train] step=001880/5000 epoch=6 lr=6.20e-05 lambda=1.88e-04 recon=0.093119 avg_l0=3394.902 theta_mean=0.001108 steps_per_sec=0.06 max_mem_gb=8.02
+[05:58:07][sae_train] step=001900/5000 epoch=6 lr=6.16e-05 lambda=1.90e-04 recon=0.149675 avg_l0=4188.071 theta_mean=0.001110 steps_per_sec=0.09 max_mem_gb=8.02
+[06:01:38][sae_train] step=001920/5000 epoch=6 lr=6.13e-05 lambda=1.92e-04 recon=0.110967 avg_l0=3753.701 theta_mean=0.001112 steps_per_sec=0.09 max_mem_gb=8.02
+[06:08:22][sae_train] step=001940/5000 epoch=6 lr=6.09e-05 lambda=1.94e-04 recon=0.092593 avg_l0=3486.427 theta_mean=0.001113 steps_per_sec=0.05 max_mem_gb=8.02
+[06:11:36][sae_train] step=001960/5000 epoch=6 lr=6.05e-05 lambda=1.96e-04 recon=0.092728 avg_l0=3449.093 theta_mean=0.001115 steps_per_sec=0.10 max_mem_gb=8.02
+[06:14:56][sae_train] step=001980/5000 epoch=6 lr=6.01e-05 lambda=1.98e-04 recon=0.084238 avg_l0=3353.364 theta_mean=0.001116 steps_per_sec=0.10 max_mem_gb=8.02
+[06:18:32][sae_train] step=002000/5000 epoch=6 lr=5.97e-05 lambda=2.00e-04 recon=0.090086 avg_l0=3502.455 theta_mean=0.001118 steps_per_sec=0.09 max_mem_gb=8.02
+[06:24:20][sae_train] step=002020/5000 epoch=6 lr=5.94e-05 lambda=2.02e-04 recon=0.089012 avg_l0=3302.945 theta_mean=0.001119 steps_per_sec=0.06 max_mem_gb=8.02
+[06:27:18][sae_train] step=002040/5000 epoch=6 lr=5.90e-05 lambda=2.04e-04 recon=0.083431 avg_l0=3338.128 theta_mean=0.001121 steps_per_sec=0.11 max_mem_gb=8.02
+[06:30:29][sae_train] step=002060/5000 epoch=6 lr=5.86e-05 lambda=2.06e-04 recon=0.082385 avg_l0=3335.533 theta_mean=0.001122 steps_per_sec=0.10 max_mem_gb=8.02
+[06:34:37][sae_train] step=002080/5000 epoch=6 lr=5.81e-05 lambda=2.08e-04 recon=0.084929 avg_l0=3440.274 theta_mean=0.001124 steps_per_sec=0.08 max_mem_gb=8.02
+[06:41:31][sae_train] step=002100/5000 epoch=6 lr=5.77e-05 lambda=2.10e-04 recon=0.085699 avg_l0=3407.470 theta_mean=0.001125 steps_per_sec=0.05 max_mem_gb=8.02
+[06:44:10][sae_train] step=002120/5000 epoch=6 lr=5.73e-05 lambda=2.12e-04 recon=0.072914 avg_l0=3257.259 theta_mean=0.001127 steps_per_sec=0.13 max_mem_gb=8.02
+[06:47:13][sae_train] step=002140/5000 epoch=6 lr=5.69e-05 lambda=2.14e-04 recon=0.074909 avg_l0=3285.450 theta_mean=0.001128 steps_per_sec=0.11 max_mem_gb=8.02
+[06:50:53][sae_train] step=002160/5000 epoch=6 lr=5.65e-05 lambda=2.16e-04 recon=0.073458 avg_l0=3299.854 theta_mean=0.001130 steps_per_sec=0.09 max_mem_gb=8.02
+[06:58:03][sae_train] step=002180/5000 epoch=6 lr=5.60e-05 lambda=2.18e-04 recon=0.072468 avg_l0=3319.903 theta_mean=0.001131 steps_per_sec=0.05 max_mem_gb=8.02
+[07:02:10][sae_train] step=002200/5000 epoch=6 lr=5.56e-05 lambda=2.20e-04 recon=0.074856 avg_l0=3350.308 theta_mean=0.001132 steps_per_sec=0.08 max_mem_gb=8.02
+[07:06:18][sae_train] step=002220/5000 epoch=6 lr=5.51e-05 lambda=2.22e-04 recon=0.071840 avg_l0=3295.696 theta_mean=0.001134 steps_per_sec=0.08 max_mem_gb=8.02
+[07:10:27][sae_train] step=002240/5000 epoch=6 lr=5.47e-05 lambda=2.24e-04 recon=0.069003 avg_l0=3295.947 theta_mean=0.001135 steps_per_sec=0.08 max_mem_gb=8.02
+[07:19:45][sae_train] step=002260/5000 epoch=7 lr=5.42e-05 lambda=2.26e-04 recon=0.100525 avg_l0=3880.189 theta_mean=0.001136 steps_per_sec=0.04 max_mem_gb=8.02
+[07:23:09][sae_train] step=002280/5000 epoch=7 lr=5.38e-05 lambda=2.28e-04 recon=0.097517 avg_l0=3841.792 theta_mean=0.001138 steps_per_sec=0.10 max_mem_gb=8.02
+[07:26:46][sae_train] step=002300/5000 epoch=7 lr=5.33e-05 lambda=2.30e-04 recon=0.084944 avg_l0=3668.554 theta_mean=0.001139 steps_per_sec=0.09 max_mem_gb=8.02
+[07:30:01][sae_train] step=002320/5000 epoch=7 lr=5.28e-05 lambda=2.32e-04 recon=0.078401 avg_l0=3573.810 theta_mean=0.001141 steps_per_sec=0.10 max_mem_gb=8.02
+[07:36:40][sae_train] step=002340/5000 epoch=7 lr=5.23e-05 lambda=2.34e-04 recon=0.073659 avg_l0=3416.132 theta_mean=0.001142 steps_per_sec=0.05 max_mem_gb=8.02
+[07:40:06][sae_train] step=002360/5000 epoch=7 lr=5.19e-05 lambda=2.36e-04 recon=0.071182 avg_l0=3448.597 theta_mean=0.001144 steps_per_sec=0.10 max_mem_gb=8.02
+[07:43:33][sae_train] step=002380/5000 epoch=7 lr=5.14e-05 lambda=2.38e-04 recon=0.072194 avg_l0=3500.585 theta_mean=0.001145 steps_per_sec=0.10 max_mem_gb=8.02
+[07:46:40][sae_train] step=002400/5000 epoch=7 lr=5.09e-05 lambda=2.40e-04 recon=0.073932 avg_l0=3464.414 theta_mean=0.001146 steps_per_sec=0.11 max_mem_gb=8.02
+[07:52:14][sae_train] step=002420/5000 epoch=7 lr=5.04e-05 lambda=2.42e-04 recon=0.070116 avg_l0=3352.065 theta_mean=0.001147 steps_per_sec=0.06 max_mem_gb=8.02
+[07:55:32][sae_train] step=002440/5000 epoch=7 lr=4.99e-05 lambda=2.44e-04 recon=0.073750 avg_l0=3454.076 theta_mean=0.001149 steps_per_sec=0.10 max_mem_gb=8.02
+[07:59:44][sae_train] step=002460/5000 epoch=7 lr=4.94e-05 lambda=2.46e-04 recon=0.066461 avg_l0=3438.136 theta_mean=0.001150 steps_per_sec=0.08 max_mem_gb=8.02
+[08:03:14][sae_train] step=002480/5000 epoch=7 lr=4.89e-05 lambda=2.48e-04 recon=0.067451 avg_l0=3416.996 theta_mean=0.001151 steps_per_sec=0.10 max_mem_gb=8.02
+[08:09:10][sae_train] step=002500/5000 epoch=7 lr=4.84e-05 lambda=2.50e-04 recon=0.061517 avg_l0=3347.727 theta_mean=0.001152 steps_per_sec=0.06 max_mem_gb=8.02
+[08:12:24][sae_train] step=002520/5000 epoch=7 lr=4.79e-05 lambda=2.52e-04 recon=0.062334 avg_l0=3389.164 theta_mean=0.001154 steps_per_sec=0.10 max_mem_gb=8.02
+[08:16:31][sae_train] step=002540/5000 epoch=7 lr=4.74e-05 lambda=2.54e-04 recon=0.060532 avg_l0=3400.828 theta_mean=0.001155 steps_per_sec=0.08 max_mem_gb=8.02
+[08:19:51][sae_train] step=002560/5000 epoch=7 lr=4.69e-05 lambda=2.56e-04 recon=0.060248 avg_l0=3404.336 theta_mean=0.001156 steps_per_sec=0.10 max_mem_gb=8.02
+[08:27:38][sae_train] step=002580/5000 epoch=7 lr=4.63e-05 lambda=2.58e-04 recon=0.062343 avg_l0=3438.726 theta_mean=0.001157 steps_per_sec=0.04 max_mem_gb=8.02
+[08:31:45][sae_train] step=002600/5000 epoch=7 lr=4.58e-05 lambda=2.60e-04 recon=0.060509 avg_l0=3383.930 theta_mean=0.001158 steps_per_sec=0.08 max_mem_gb=8.02
+[08:35:50][sae_train] step=002620/5000 epoch=7 lr=4.53e-05 lambda=2.62e-04 recon=0.059750 avg_l0=3463.594 theta_mean=0.001159 steps_per_sec=0.08 max_mem_gb=8.02
+[08:40:24][sae_train] step=002640/5000 epoch=7 lr=4.48e-05 lambda=2.64e-04 recon=0.061180 avg_l0=3449.356 theta_mean=0.001160 steps_per_sec=0.07 max_mem_gb=8.02
+[08:48:18][sae_train] step=002660/5000 epoch=8 lr=4.42e-05 lambda=2.66e-04 recon=0.079428 avg_l0=3787.747 theta_mean=0.001162 steps_per_sec=0.04 max_mem_gb=8.02
+[08:51:46][sae_train] step=002680/5000 epoch=8 lr=4.37e-05 lambda=2.68e-04 recon=0.069140 avg_l0=3681.579 theta_mean=0.001163 steps_per_sec=0.10 max_mem_gb=8.02
+[08:55:10][sae_train] step=002700/5000 epoch=8 lr=4.32e-05 lambda=2.70e-04 recon=0.064747 avg_l0=3591.346 theta_mean=0.001164 steps_per_sec=0.10 max_mem_gb=8.02
+[08:58:39][sae_train] step=002720/5000 epoch=8 lr=4.26e-05 lambda=2.72e-04 recon=0.063270 avg_l0=3570.892 theta_mean=0.001165 steps_per_sec=0.10 max_mem_gb=8.02
+[09:05:26][sae_train] step=002740/5000 epoch=8 lr=4.21e-05 lambda=2.74e-04 recon=0.065881 avg_l0=3617.699 theta_mean=0.001166 steps_per_sec=0.05 max_mem_gb=8.02
+[09:08:43][sae_train] step=002760/5000 epoch=8 lr=4.16e-05 lambda=2.76e-04 recon=0.058413 avg_l0=3520.178 theta_mean=0.001167 steps_per_sec=0.10 max_mem_gb=8.02
+[09:11:25][sae_train] step=002780/5000 epoch=8 lr=4.10e-05 lambda=2.78e-04 recon=0.063992 avg_l0=3492.590 theta_mean=0.001168 steps_per_sec=0.12 max_mem_gb=8.02
+[09:14:13][sae_train] step=002800/5000 epoch=8 lr=4.05e-05 lambda=2.80e-04 recon=0.057374 avg_l0=3479.233 theta_mean=0.001169 steps_per_sec=0.12 max_mem_gb=8.02
+[09:21:29][sae_train] step=002820/5000 epoch=8 lr=3.99e-05 lambda=2.82e-04 recon=0.059274 avg_l0=3531.510 theta_mean=0.001170 steps_per_sec=0.05 max_mem_gb=8.02
+[09:24:41][sae_train] step=002840/5000 epoch=8 lr=3.94e-05 lambda=2.84e-04 recon=0.056561 avg_l0=3556.381 theta_mean=0.001171 steps_per_sec=0.10 max_mem_gb=8.02
+[09:28:35][sae_train] step=002860/5000 epoch=8 lr=3.88e-05 lambda=2.86e-04 recon=0.061127 avg_l0=3565.022 theta_mean=0.001172 steps_per_sec=0.09 max_mem_gb=8.02
+[09:31:18][sae_train] step=002880/5000 epoch=8 lr=3.83e-05 lambda=2.88e-04 recon=0.051773 avg_l0=3485.147 theta_mean=0.001173 steps_per_sec=0.12 max_mem_gb=8.02
+[09:37:45][sae_train] step=002900/5000 epoch=8 lr=3.77e-05 lambda=2.90e-04 recon=0.052406 avg_l0=3505.438 theta_mean=0.001174 steps_per_sec=0.05 max_mem_gb=8.02
+[09:41:49][sae_train] step=002920/5000 epoch=8 lr=3.72e-05 lambda=2.92e-04 recon=0.050474 avg_l0=3494.906 theta_mean=0.001175 steps_per_sec=0.08 max_mem_gb=8.02
+[09:44:58][sae_train] step=002940/5000 epoch=8 lr=3.66e-05 lambda=2.94e-04 recon=0.050941 avg_l0=3526.176 theta_mean=0.001176 steps_per_sec=0.11 max_mem_gb=8.02
+[09:49:02][sae_train] step=002960/5000 epoch=8 lr=3.61e-05 lambda=2.96e-04 recon=0.052910 avg_l0=3557.271 theta_mean=0.001177 steps_per_sec=0.08 max_mem_gb=8.02
+[09:57:13][sae_train] step=002980/5000 epoch=8 lr=3.55e-05 lambda=2.98e-04 recon=0.049437 avg_l0=3511.833 theta_mean=0.001178 steps_per_sec=0.04 max_mem_gb=8.02
+[10:01:32][sae_train] step=003000/5000 epoch=8 lr=3.50e-05 lambda=3.00e-04 recon=0.051686 avg_l0=3591.355 theta_mean=0.001179 steps_per_sec=0.08 max_mem_gb=8.02
+[10:06:45][sae_train] step=003020/5000 epoch=9 lr=3.45e-05 lambda=3.02e-04 recon=0.063333 avg_l0=3829.854 theta_mean=0.001179 steps_per_sec=0.06 max_mem_gb=8.02
+[10:10:09][sae_train] step=003040/5000 epoch=9 lr=3.39e-05 lambda=3.04e-04 recon=0.068618 avg_l0=3921.133 theta_mean=0.001180 steps_per_sec=0.10 max_mem_gb=8.02
+[10:17:05][sae_train] step=003060/5000 epoch=9 lr=3.34e-05 lambda=3.06e-04 recon=0.057065 avg_l0=3701.972 theta_mean=0.001181 steps_per_sec=0.05 max_mem_gb=8.02
+[10:20:27][sae_train] step=003080/5000 epoch=9 lr=3.28e-05 lambda=3.08e-04 recon=0.053696 avg_l0=3664.615 theta_mean=0.001182 steps_per_sec=0.10 max_mem_gb=8.02
+[10:23:42][sae_train] step=003100/5000 epoch=9 lr=3.23e-05 lambda=3.10e-04 recon=0.055057 avg_l0=3652.794 theta_mean=0.001183 steps_per_sec=0.10 max_mem_gb=8.02
+[10:27:12][sae_train] step=003120/5000 epoch=9 lr=3.17e-05 lambda=3.12e-04 recon=0.050033 avg_l0=3624.994 theta_mean=0.001184 steps_per_sec=0.10 max_mem_gb=8.02
+[10:33:45][sae_train] step=003140/5000 epoch=9 lr=3.12e-05 lambda=3.14e-04 recon=0.051572 avg_l0=3612.564 theta_mean=0.001185 steps_per_sec=0.05 max_mem_gb=8.02
+[10:36:26][sae_train] step=003160/5000 epoch=9 lr=3.06e-05 lambda=3.16e-04 recon=0.054466 avg_l0=3613.047 theta_mean=0.001185 steps_per_sec=0.12 max_mem_gb=8.02
+[10:39:25][sae_train] step=003180/5000 epoch=9 lr=3.01e-05 lambda=3.18e-04 recon=0.048910 avg_l0=3596.580 theta_mean=0.001186 steps_per_sec=0.11 max_mem_gb=8.02
+[10:42:34][sae_train] step=003200/5000 epoch=9 lr=2.95e-05 lambda=3.20e-04 recon=0.050784 avg_l0=3670.654 theta_mean=0.001187 steps_per_sec=0.11 max_mem_gb=8.02
+=>> PBS: job killed: walltime 42604 exceeded limit 42600
+W0314 10:43:44.985000 1734389 torch/distributed/elastic/agent/server/api.py:739] Received Signals.SIGTERM death signal, shutting down workers
+W0314 10:43:44.991000 1734389 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1734404 closing signal SIGTERM
+W0314 10:43:44.994000 1734389 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1734405 closing signal SIGTERM
+/apps/z_install_tree/linux-rocky8-ivybridge/gcc-12.2.0/python-3.10.8-pmtwsrrmcmrs6olvgx5xhepgh7gl5vro/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 3 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/apps/z_install_tree/linux-rocky8-ivybridge/gcc-12.2.0/python-3.10.8-pmtwsrrmcmrs6olvgx5xhepgh7gl5vro/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 3 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+Traceback (most recent call last):
+  File "/srv/scratch/z5534565/sae-v1/venv/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 308, in launch_agent
+    result = agent.run()
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 134, in wrapper
+    result = f(*args, **kwargs)
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 731, in run
+    result = self._invoke_run(role)
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 908, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/srv/scratch/z5534565/sae-v1/venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 86, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1734389 got signal: 15
+
+================================================================================
+                     Resource Usage on 14/03/2026 10:43:53                      
+
+Job Id: 7565704 
+Queue: CSE
+Walltime: 11:50:09  (requested 11:50:00)
+The job could not be executed.
+Exit Status -29 - Job run time might have exceeded walltime requested.
+
+--------------------------------------------------------------------------------
+|              |             GPUs              |            Memory             |
+--------------------------------------------------------------------------------
+| Node  GPU ID | Requested   Used   Efficiency | Available   Used              |
+| k092    6    |     1       0.17       17%    | 40960 MiB   9.7G              |
+| k092    5    |     1       0.16       16%    | 40960 MiB   9.7G              |
+--------------------------------------------------------------------------------
+|Total         |     2       0.33      16.5%   |                               |
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+|              |             CPUs              |            Memory             |
+--------------------------------------------------------------------------------
+| Node         | Requested   Used   Efficiency | Requested   Used   Efficiency |
+| k092         |     1       0.99      99.0%   |  16.0gb    10.39gb    64.9%   |
+--------------------------------------------------------------------------------
