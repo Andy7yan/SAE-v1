@@ -1,16 +1,25 @@
-from datetime import datetime
 from pathlib import Path
 import os
-
-USER = os.environ["USER"]
 
 MODEL_NAME = "google/gemma-2-2b-it"
 DOLMA_URL = "https://olmo-data.org/dolma-v1_6/books/books-0000.json.gz"
 
-SCRATCH_BASE = Path(f"/srv/scratch/{USER}/sae-v1")
-RESULT_BASE = Path(f"/srv/scratch/{USER}/sae-v1-res")
+USER = os.environ["USER"]
+SCRATCH_ROOT = Path(f"/srv/scratch/{USER}")
+RESOURCE_BASE = SCRATCH_ROOT / "sae-v1"
+RESULT_BASE = SCRATCH_ROOT / "sae-v1-res"
 
-DATA_CACHE_PATH = SCRATCH_BASE / "data_cache" / "books-0000.json.gz"
+DATA_CACHE_PATH = RESOURCE_BASE / "data_cache" / "books-0000.json.gz"
+HF_BASE = RESOURCE_BASE / "hf"
+INIT_STATS_DIR = RESOURCE_BASE / "init_stats"
+
+SAE_RUN_NAME = os.environ.get("SAE_RUN_NAME", "jumprelu_sae")
+SAE_RUN_STAMP = os.environ.get("SAE_RUN_STAMP", "manual")
+SAE_RUN_DIR_ENV = os.environ.get("SAE_RUN_DIR")
+if SAE_RUN_DIR_ENV:
+    RUN_DIR = Path(SAE_RUN_DIR_ENV)
+else:
+    RUN_DIR = RESULT_BASE / f"{SAE_RUN_STAMP}-{SAE_RUN_NAME}"
 
 HOOK_LAYER_INDEX = 12
 MAX_SEQ_LEN = 256
@@ -24,7 +33,7 @@ SAE_BATCH_SIZE = 4096
 BUFFER_CAPACITY = 131072
 
 TRAIN_STEPS = 10000
-LOG_EVERY = 100
+LOG_EVERY = 20
 SAVE_EVERY = 1000
 
 LATENT_DIM = 16384
@@ -43,8 +52,6 @@ LR_WARMUP_STEPS = 500
 LR_WARMUP_START_FACTOR = 0.1
 L0_WARMUP_STEPS = 1000
 
-THRESHOLD_LOG_QUANTILES = (0.05, 0.50, 0.95)
-
 MEAN_INIT_BATCHES = 64
 TOKEN_STATS_BATCHES = 32
 TOKEN_LENGTH_PROBE_MAX_LEN = 4096
@@ -59,18 +66,6 @@ SEED = 42
 HTTP_TIMEOUT = 30
 USER_AGENT = "Mozilla/5.0"
 
-RUN_MMDD = os.environ.get("SAE_RUN_MMDD", datetime.now().strftime("%m%d"))
-RUN_JOB_SHORT = os.environ.get("SAE_RUN_JOB_SHORT", "local")
-RUN_DIR_ENV = os.environ.get("SAE_RUN_DIR")
-
-if RUN_DIR_ENV:
-    OUTPUT_DIR = Path(RUN_DIR_ENV)
-else:
-    OUTPUT_DIR = RESULT_BASE / f"{RUN_MMDD}-{RUN_JOB_SHORT}"
-
-LOG_DIR = OUTPUT_DIR / "logs"
-CHECKPOINT_DIR = OUTPUT_DIR / "checkpoints"
-WEIGHTS_DIR = OUTPUT_DIR / "weights"
-FINAL_WEIGHTS_PATH = WEIGHTS_DIR / "sae-v1.pt"
-
-INIT_STATS_CACHE_PATH = SCRATCH_BASE / "init_stats" / "init_stats.pt"
+MODEL_TAG = MODEL_NAME.split("/")[-1].replace("-", "_").replace(".", "_")
+OUTPUT_DIR = RUN_DIR / "checkpoints"
+INIT_STATS_CACHE_PATH = INIT_STATS_DIR / f"init_stats_{MODEL_TAG}_layer{HOOK_LAYER_INDEX}_seq{MAX_SEQ_LEN}.pt"

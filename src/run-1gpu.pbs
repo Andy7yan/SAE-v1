@@ -1,0 +1,37 @@
+#!/bin/bash
+#PBS -N sae-v1
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb
+#PBS -l walltime=11:50:00
+#PBS -j oe
+
+set -euo pipefail
+
+JOB_NUM="${PBS_JOBID%%.*}"
+if [ ${#JOB_NUM} -gt 3 ]; then
+    JOB_SHORT="${JOB_NUM:3}"
+else
+    JOB_SHORT="$JOB_NUM"
+fi
+
+RUN_MMDD="$(date +%m%d)"
+RUN_DIR="/srv/scratch/$USER/sae-v1-res/${RUN_MMDD}-${JOB_SHORT}"
+
+mkdir -p "$RUN_DIR/logs"
+mkdir -p "$RUN_DIR/checkpoints"
+mkdir -p "$RUN_DIR/weights"
+mkdir -p "/srv/scratch/$USER/sae-v1/init_stats"
+
+export SAE_RUN_MMDD="$RUN_MMDD"
+export SAE_RUN_JOB_SHORT="$JOB_SHORT"
+export SAE_RUN_DIR="$RUN_DIR"
+
+cd "$PBS_O_WORKDIR"
+source .env
+
+exec > >(tee -a "$RUN_DIR/logs/train.log") 2>&1
+
+echo "PBS_JOBID=$PBS_JOBID"
+echo "RUN_DIR=$RUN_DIR"
+echo "START_TIME=$(date '+%Y-%m-%d %H:%M:%S')"
+
+torchrun --nproc_per_node=1 src/train.py

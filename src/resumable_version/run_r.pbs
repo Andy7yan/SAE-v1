@@ -1,0 +1,73 @@
+#!/bin/bash
+#PBS -N sae_train_monday
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb
+#PBS -l walltime=11:50:00
+#PBS -j oe
+
+set -euo pipefail
+
+cd "$PBS_O_WORKDIR"
+
+SCRATCH_BASE="/srv/scratch/$USER"
+RESOURCE_BASE="$SCRATCH_BASE/sae-v1"
+RESULT_BASE="$SCRATCH_BASE/sae-v1-res"
+
+if [ -f "$RESOURCE_BASE/venv/bin/activate" ]; then
+  source "$RESOURCE_BASE/venv/bin/activate"
+fi
+
+if [ -f .env ]; then
+  source .env
+fi
+
+RUN_NAME="${RUN_NAME:-jumprelu}"
+TARGET_TRAIN_STEPS="${TARGET_TRAIN_STEPS:-10000}"
+DATASET_STEP="${DATASET_STEP:-0}"
+RESUME_CHECKPOINT="${RESUME_CHECKPOINT:-}"
+NPROC_PER_NODE="${NPROC_PER_NODE:-1}"
+
+STAMP="$(date +%Y%m%d-%H%M%S)"
+
+if [ -n "$RESUME_CHECKPOINT" ]; then
+  CHECKPOINT_DIR="$(dirname "$RESUME_CHECKPOINT")"
+  RUN_DIR="$(dirname "$CHECKPOINT_DIR")"
+else
+  RUN_DIR="$RESULT_BASE/${STAMP}-${RUN_NAME}-${PBS_JOBID}"
+fi
+
+CHECKPOINT_OUT_DIR="$RUN_DIR/checkpoints"
+LOG_DIR="$RUN_DIR/logs"
+EVAL_DIR="$RUN_DIR/eval"
+
+mkdir -p "$CHECKPOINT_OUT_DIR" "$LOG_DIR" "$EVAL_DIR"
+
+export SAE_RUN_NAME="$RUN_NAME"
+export SAE_RUN_STAMP="$STAMP"
+export SAE_RUN_DIR="$RUN_DIR"
+export PYTHONUNBUFFERED=1
+
+LOG_FILE="$LOG_DIR/train.${PBS_JOBID}.log"
+
+CMD=(
+  torchrun
+  --nproc_per_node="$NPROC_PER_NODE"
+  src/train.py
+  --train-steps "$TARGET_TRAIN_STEPS"
+  --dataset-step "$DATASET_STEP"
+  --output-dir "$CHECKPOINT_OUT_DIR"
+)
+
+if [ -n "$RESUME_CHECKPOINT" ]; then
+  CMD+=(--resume-checkpoint "$RESUME_CHECKPOINT")
+fi
+
+echo "RUN_DIR=$RUN_DIR" | tee -a "$LOG_FILE"
+echo "LOG_FILE=$LOG_FILE" | tee -a "$LOG_FILE"
+echo "TARGET_TRAIN_STEPS=$TARGET_TRAIN_STEPS" | tee -a "$LOG_FILE"
+echo "DATASET_STEP=$DATASET_STEP" | tee -a "$LOG_FILE"
+echo "RESUME_CHECKPOINT=${RESUME_CHECKPOINT:-<none>}" | tee -a "$LOG_FILE"
+printf 'COMMAND=' | tee -a "$LOG_FILE"
+printf '%q ' "${CMD[@]}" | tee -a "$LOG_FILE"
+printf '\n' | tee -a "$LOG_FILE"
+
+"${CMD[@]}" 2>&1 | tee -a "$LOG_FILE"

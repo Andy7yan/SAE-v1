@@ -1,0 +1,2 @@
+checkpoint_name,used_text_batches,total_valid_tokens,total_features,dead_features,dead_neuron_ratio
+sae_step_010000.pt,64,522009,16384,0,0.0
